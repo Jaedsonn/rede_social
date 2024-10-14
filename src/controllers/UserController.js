@@ -6,6 +6,39 @@ const { sign } = require("jsonwebtoken")
 const { config } = require("dotenv")
 config()
 
+async function getUser(req, res) {
+    try {
+        const data = req.data
+        const usuario = await findUser(data.name)
+        console.log(data)
+        res.status(200).json({ usuario })
+    } catch (error) {
+        console.log(error)
+        let erros = Array.from([error.message]) || ['No error descriptor']
+        if (error.errors) {
+            erros = error.errors.map(element => element.message)
+        }
+        res.status(401).json({ 'message': 'Request fail', erros })
+    }
+}
+
+async function getAllUser(req, res) {
+    try {
+        const checkUserExists = `SELECT * FROM usuarios`
+        const findUser = await (await db()).query(checkUserExists);
+
+
+        res.status(200).json({ usuarios:findUser[0] })
+    } catch (error) {
+        console.log(error)
+        let erros = Array.from([error.message]) || ['No error descriptor']
+        if (error.errors) {
+            erros = error.errors.map(element => element.message)
+        }
+        res.status(401).json({ 'message': 'Request fail', erros })
+    }
+}
+
 async function register(req, res) {
     try {
         const { username, password } = req.body
@@ -72,4 +105,59 @@ async function login(req, res) {
     }
 }
 
-module.exports = { register, login }
+async function deleteUser(req, res) {
+    try {
+        const connect = await db()
+        const { id } = req.params
+        const deleteUserQuery = `DELETE FROM usuarios
+WHERE user_id = ?;
+`
+        const deleteUser = await connect.query(deleteUserQuery, [id])
+        console.log(deleteUser)
+
+        res.status(200).json({ message: "usuario deletado" })
+    } catch (error) {
+        console.log(error)
+        let erros = Array.from([error.message]) || ['No error descriptor']
+        if (error.errors) {
+            erros = error.errors.map(element => element.message)
+        }
+        res.status(401).json({ 'message': 'Request fail', erros })
+    }
+}
+
+async function updateUser(req, res) {
+    try {
+        const connection = await db();
+        const { username, password } = req.body;
+        const { id } = req.params;
+
+        const [currentUser] = await connection.query(`SELECT * FROM usuarios WHERE user_id = ?`, [id]);
+
+        if (!currentUser.length) {
+            throw new Error('User não encontrado');
+        }
+
+        const name = username || currentUser[0].username;
+        const pass = password || currentUser[0].password;
+
+        const query = `
+            UPDATE usuarios
+            SET username = ?, password = ?
+            WHERE user_id = ?;
+        `;
+
+        const [result] = await connection.query(query, [name, pass, id]);
+
+        res.status(200).json({ message: "User update done" });
+    } catch (error) {
+        console.log(error)
+        let erros = Array.from([error.message]) || ['No error descriptor']
+        if (error.errors) {
+            erros = error.errors.map(element => element.message)
+        }
+        res.status(401).json({ 'message': 'Request fail', erros })
+    }
+}
+
+module.exports = { register, login, deleteUser, updateUser, getUser, getAllUser }
