@@ -1,0 +1,18 @@
+CREATE TABLE `usuarios` (
+    `user_id` int NOT NULL AUTO_INCREMENT,
+    `username` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+    `password` varchar(255) NOT NULL,
+    PRIMARY KEY (`user_id`),
+    UNIQUE KEY `email` (`username`)
+)
+
+CREATE TABLE `posts` (
+    `post_id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int NOT NULL,
+    `titulo` varchar(255) NOT NULL,
+    `descricao` text,
+    `imagem_capa` varchar(255) DEFAULT NULL,
+    PRIMARY KEY (`post_id`),
+    KEY `user_id` (`user_id`),
+    CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `usuarios` (`user_id`) ON DELETE CASCADE
+)
